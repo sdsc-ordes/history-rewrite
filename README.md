@@ -26,8 +26,12 @@ just develop
 
 To introduce files on the first commit to rewrite.
 
-Place all files in `prepend/<git-path>`, e.g. `touch prepend/a/b/c/text.dat`.
-These files will be fetched from the `main` branch and then prepended to the first commit with `git filter-repo`.
+1. Place all files in `prepend/<git-path>`, e.g. `touch prepend/a/b/c/text.dat`.
+
+   - These files will be fetched from the `main` branch and then prepended to
+     the first commit with `git filter-repo`.
+
+   - If `.gitattributes` file is also placed
 
 Then use
 

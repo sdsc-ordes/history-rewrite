@@ -46,3 +46,7 @@ nix-develop *args:
 # Run the rewrite.
 run:
     ./src/rewrite.sh
+
+# Inspect the rewrite.
+inspect:
+    cd ./.output/server && gitk --all &

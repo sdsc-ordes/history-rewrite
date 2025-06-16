@@ -4,7 +4,7 @@
 set -eu
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUT="$(git rev-parse --show-toplevel)"
+OUT="$(git rev-parse --show-toplevel)/.output"
 cd "$DIR"
 
 function die() {
@@ -24,7 +24,11 @@ function store_branches() {
     branches=()
     readarray -t branches < <(git for-each-ref --format '%(refname)')
 
-    echo "## Branches" >"$f"
+    {
+        echo "## Branches"
+        echo ""
+        echo "These are the branches and merge-base ref/commit before the rewrite."
+    } >"$f"
     for b in "${branches[@]}"; do
         echo "Branch '$b'"
         merge_base=$(git merge-base refs/heads/main "$b")
@@ -32,19 +36,57 @@ function store_branches() {
         {
             echo "- Branch \`$b\`"
             echo "  Merge-Base SHA: \`$merge_base\`"
-            echo "  Commit Subject: \`$log\`"
+            echo "  Merge-Base Subject: \`$log\`"
         } >>"$f"
+    done
+}
+
+function add_prepend_paths() {
+    local -n _delete_paths="$1"
+    local -n _script="$2"
+    local folder="$3"
+    local branch="${4:-main}"
+
+    readarray -t files < <(cd "$folder" && find . -type f)
+    for f in "${files[@]}"; do
+        path="$folder/$f"
+        git_path="${f##./}"
+
+        mkdir -p "$(dirname "$path")"
+        if [ "$branch" != "" ]; then
+            echo "Store file '$f' from '$branch' to prepend."
+
+            sha=$(git rev-parse "$branch:$git_path") || die "no sha"
+            echo "SHA: $sha"
+            git cat-file -p "$sha" >"$path"
+        else
+            echo "Store file '$f' to prepend."
+        fi
+
+        _delete_paths+=(--path "$git_path")
+
+        s="
+  print('----> Add file $git_path to commit.')
+  commit.file_changes.append(
+      FileChange(b'M', b'$git_path', store_file('$path'), file_mode('$path'))
+  )
+"
+        _script="$_script$s"
+
     done
 }
 
 cleanup
 
 URL="${URL:-https://gitlab.com/data-custodian/dac-portal.git}"
-BRANCH_FILES="main"
 
 mkdir -p "$OUT" && cd "$OUT"
-git clone --bare "$URL" server || die "clone server"
-git -C "server" remote remove origin
+git clone --bare --mirror "$URL" server || die "clone server"
+cd server &&
+    git lfs install --local &&
+    git lfs fetch --all &&
+    git lfs ls-files &&
+    git remote remove origin
 
 git clone "$OUT/server" tree || die "clone tree"
 
@@ -70,27 +112,8 @@ EOF
 )
 
 delete_paths=()
-readarray -t files < <(cd "$DIR/prepend" && find . -type f)
-for f in "${files[@]}"; do
-    path="$DIR/prepend/$f"
-    echo "Store file '$f' from '$BRANCH_FILES' to prepend."
-
-    mkdir -p "$(dirname "$path")"
-    git_path="${f##./}"
-    sha=$(git rev-parse "$BRANCH_FILES:$git_path") || die "no sha"
-    echo "SHA: $sha"
-    git cat-file -p "$sha" >"$path"
-
-    delete_paths+=(--path "$git_path")
-
-    s="
-  print('----> Add file $git_path to commit.')
-  commit.file_changes.append(
-    FileChange(b'M', b'$git_path', store_file('$path'), file_mode('$path'))
-  )"
-    script="$script$s"
-
-done
+add_prepend_paths delete_paths script "$DIR/prepend"
+add_prepend_paths delete_paths script "$DIR/prepend-fixed" ""
 
 echo -e "Commit Callback Script ==== \n$script\n======"
 
@@ -101,3 +124,7 @@ git filter-repo --force \
 
 echo "Add back files at first commit."
 git filter-repo --force --commit-callback "$script"
+
+echo "Rewrite whole history over git-lfs."
+# --fixup uses .gitattributes file on a commit basis.
+git lfs migrate import --everything --fixup
