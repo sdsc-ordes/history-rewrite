@@ -24,7 +24,18 @@ just develop
 
 ## Usage
 
-Describe the installation instruction here.
+To introduce files on the first commit to rewrite.
+
+Place all files in `prepend/<git-path>`, e.g. `touch prepend/a/b/c/text.dat`.
+These files will be fetched from the `main` branch and then prepended to the first commit with `git filter-repo`.
+
+Then use
+
+```bash
+just run
+```
+
+which will create a `server`
 
 ## Development
 

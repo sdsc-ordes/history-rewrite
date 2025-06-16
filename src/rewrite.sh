@@ -4,6 +4,7 @@
 set -eu
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OUT="$(git rev-parse --show-toplevel)"
 cd "$DIR"
 
 function die() {
@@ -12,14 +13,14 @@ function die() {
 }
 
 function cleanup() {
-    rm -rf "$DIR/server"
-    rm -rf "$DIR/tree"
+    rm -rf "$OUT/server"
+    rm -rf "$OUT/tree"
 }
 
 function store_branches() {
-    cd "$DIR/server"
+    cd "$OUT/server"
 
-    f="$DIR/branches.md"
+    f="$OUT/branches.md"
     branches=()
     readarray -t branches < <(git for-each-ref --format '%(refname)')
 
@@ -41,15 +42,16 @@ cleanup
 URL="${URL:-https://gitlab.com/data-custodian/dac-portal.git}"
 BRANCH_FILES="main"
 
+mkdir -p "$OUT" && cd "$OUT"
 git clone --bare "$URL" server || die "clone server"
 git -C "server" remote remove origin
 
-git clone "$DIR/server" tree || die "clone tree"
+git clone "$OUT/server" tree || die "clone tree"
 
 echo "Store branches file."
 store_branches
 
-cd "$DIR/server"
+cd "$OUT/server"
 script=$(
     cat <<EOF
 import os

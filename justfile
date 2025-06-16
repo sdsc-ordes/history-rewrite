@@ -42,5 +42,7 @@ nix-develop *args:
     nix develop --no-pure-eval --accept-flake-config \
         "{{flake_dir}}#$shell" --command "${args[@]}"
 ## ============================================================================
+
+# Run the rewrite.
 run:
     ./src/rewrite.sh
