@@ -42,18 +42,5 @@ nix-develop *args:
     nix develop --no-pure-eval --accept-flake-config \
         "{{flake_dir}}#$shell" --command "${args[@]}"
 ## ============================================================================
-# Lint the project.
-lint *args:
-    echo "TODO: Not implemented"
-
-# Build the module.
-build *args:
-    echo "TODO: Not implemented"
-
-# Test the project.
-test *args:
-    echo "TODO: Not implemented"
-
-# Run an executable.
-run *args:
-    echo "TODO: Not implemented"
+run:
+    ./src/rewrite.sh
