@@ -1,0 +1,17 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_src_path: src/generic
+project_affiliation: SDSC - Swiss Data Science Center
+project_authors:
+-   email: gabriel.nuetzi@sdsc.ethz.ch
+    first_name: Gabriel
+    last_name: Nützi
+project_description: Simple history rewrite to prepend some files on first commit.
+project_hosts:
+-   host: github.com
+    organization: sdsc-ordes
+    repo: history-rewrite
+project_language: generic
+project_license: mit
+project_name: history-rewrite
+project_url: https://github.com/sdsc-ordes/history-rewrite
+project_version: 0.0.1
